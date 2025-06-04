@@ -11,11 +11,10 @@ export default function LoginScreen({ navigation }) {
   async function handleLogin() {
     const db = await openDatabase();
     const usuario = await db.getFirstAsync('SELECT * from usuarios WHERE login = ?  AND senha = ?', [login, senha])
-   
-   
 
     if (usuario != undefined){
       console.log('Sucesso');
+      console.log(usuario.id);
       navigation.navigate('Feed',{usuario});
     }else {
       Alert.alert('Erro', 'Login ou senha inválidos');

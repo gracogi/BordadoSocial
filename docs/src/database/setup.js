@@ -5,10 +5,7 @@ import { Asset } from 'expo-asset';
 export  async function openDatabase() {
 
   const dbName = 'database.db';
-  
-
   const dbUri = `${FileSystem.documentDirectory}SQLite/${dbName}`;
-
   const dir = `${FileSystem.documentDirectory}SQLite`;
   const fileExists = await FileSystem.getInfoAsync(dbUri);
 
