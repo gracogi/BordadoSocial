@@ -1,7 +1,7 @@
 📱 Bordado Social
 
 **Uma solução mobile de impacto social para conectar pessoas interessadas em artesanato e promover ações comunitárias através dessas atividades.**
----
+
 ## 🎯 Sobre o Projeto
 
 O **Bordado Social** é um aplicativo desenvolvido por estudantes do Centro Universitário Unimetrocamp Wyden com o objetivo de criar uma rede de pessoas interessadas em artesanato e ações sociais. Através da plataforma, os usuários podem compartilhar trabalhos, organizar eventos solidários e fortalecer o vínculo com a comunidade.
