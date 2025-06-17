@@ -25,7 +25,7 @@ O **Bordado Social** é um aplicativo desenvolvido por estudantes do Centro Univ
 | Data       | Atividade                                               |
 |----------- |-------------------------------------------------------- |
 | 09/04      | Planejamento inicial e definição de tarefas             |
-| 16/04      | Pesquisa de campo com artesãs locais                    |
+| 16/04      | Pesquisa de campo com pessoas interessada               |
 | 23/04      | Desenvolvimento inicial do front-end                    |
 | 30/04      | Backend e integração com banco de dados SQLite          |
 | 07/05      | Testes e validação com usuários                         |
