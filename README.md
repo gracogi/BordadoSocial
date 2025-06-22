@@ -38,7 +38,7 @@ O **Bordado Social** é um aplicativo desenvolvido por estudantes do Centro Univ
 ## 👥 Equipe de Desenvolvimento
 
 - **Giovanna Graço Soprano** - Front-end & Documentação
-- **Matheus Rodrigues dos Santos** - Comunicação com usuários & Front-end
+- **Matheus Rodrigues dos Santos** - Comunicação com usuários.
 - **Wellington José de Lima** - Backend & Banco de Dados
   
 **Orientador:** Luiz Gustavo Turatti
