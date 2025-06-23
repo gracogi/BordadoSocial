@@ -7,38 +7,33 @@ import * as ImagePicker from 'expo-image-picker';
 
 export default function Feed() {
   const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('text');
   const route = useRoute();
   const { usuario } = route.params;
+
   const [publicacoes, setPublicacoes] = useState([]);
+  const [activeTab, setActiveTab] = useState('text');
 
   useEffect(() => {
-    const carregarPublicacoes = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/publicacoes'); // 👉 Troque pelo seu endpoint real
-        if (!response.ok) throw new Error('Erro ao buscar publicações');
-        const data = await response.json();
-        setPublicacoes(data);
-        console.log('Publicações carregadas:', data);
-      } catch (error) {
-        console.error('Erro ao carregar publicações:', error);
-        Alert.alert('Erro', 'Não foi possível carregar as publicações.');
-      }
-    };
+    carregarPublicacoes();
 
     (async () => {
       const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
       if (cameraPermission.status !== 'granted') {
-        Alert.alert(
-          "Permissões necessárias",
-          "Precisamos de permissões para acessar sua câmera.",
-          [{ text: "OK" }]
-        );
+        Alert.alert("Permissões necessárias", "Precisamos de permissões para acessar sua câmera.", [{ text: "OK" }]);
       }
     })();
-
-    carregarPublicacoes();
   }, []);
+
+  const carregarPublicacoes = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/publicacoes');
+      const data = await response.json();
+      setPublicacoes(data);
+    } catch (error) {
+      console.error('Erro ao carregar publicações:', error);
+      Alert.alert('Erro', 'Não foi possível carregar as publicações.');
+    }
+  };
 
   const takePhoto = async () => {
     let result = await ImagePicker.launchCameraAsync({
@@ -60,10 +55,10 @@ export default function Feed() {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (item) => {
     try {
       const result = await Share.share({
-        message: 'Confira esta publicação incrível no Bordado Social!',
+        message: `Confira esta publicação incrível no Bordado Social!\n\n${item.descricao}`,
       });
       if (result.action === Share.sharedAction) {
         console.log('Compartilhado');
@@ -79,7 +74,7 @@ export default function Feed() {
     <View style={styles.post}>
       <View style={styles.postHeader}>
         <Image 
-          source={require('../../../assets/teste1.jpg')} 
+          source={require('../../../assets/teste1.jpg')}
           style={styles.postProfilePic}
         />
         <View>
@@ -95,7 +90,7 @@ export default function Feed() {
       <Text>{item.descricao}</Text>
 
       <Image 
-        source={require('../../../assets/teste2.jpg')} 
+        source={require('../../../assets/teste2.jpg')}
         style={styles.postImage}
       />
 
@@ -113,7 +108,8 @@ export default function Feed() {
           </TouchableOpacity>
           <Text style={styles.actionText}>{item.comentarios}</Text>
         </View>
-        <TouchableOpacity onPress={handleShare}>
+
+        <TouchableOpacity onPress={() => handleShare(item)}>
           <Ionicons name="share-social-outline" size={24} color="gray" />
         </TouchableOpacity>
       </View>
@@ -156,7 +152,7 @@ export default function Feed() {
         data={publicacoes}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
-        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Carregando publicações...</Text>}
+        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Nenhuma publicação encontrada.</Text>}
       />
     </SafeAreaView>
   );

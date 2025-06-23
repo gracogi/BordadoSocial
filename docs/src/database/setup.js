@@ -1,25 +1,24 @@
-// setup.js no Node.js
-const sqlite3 = require('sqlite3').verbose();
+import * as SQLite from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system';
+import { Asset } from 'expo-asset';
 
-const db = new sqlite3.Database('./database.db', (err) => {
-  if (err) {
-    console.error('Erro ao abrir o banco de dados', err.message);
-  } else {
-    db.run(`CREATE TABLE IF NOT EXISTS usuarios (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nomeExibicao TEXT,
-      arroba TEXT
-    )`);
-    db.run(`CREATE TABLE IF NOT EXISTS publicacoes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      usuario_id INTEGER,
-      descricao TEXT,
-      curtidas INTEGER,
-      comentarios INTEGER,
-      FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
-    )`);
-    console.log('Banco de dados inicializado no backend');
+export  async function openDatabase() {
+
+  const dbName = 'database.db';
+  const dbUri = `${FileSystem.documentDirectory}SQLite/${dbName}`;
+  const dir = `${FileSystem.documentDirectory}SQLite`;
+  const fileExists = await FileSystem.getInfoAsync(dbUri);
+
+  if (!fileExists.exists){
+    console.log(asset)
+    await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+    const asset = Asset.fromModule(require('../../assets/database.db'));
+    await asset.downloadAsync();
+    await FileSystem.copyAsync({
+      from: asset.localUri,
+      to: dbUri,
+    });
   }
-});
 
-module.exports = db;
+  return SQLite.openDatabaseAsync(dbName);
+}
