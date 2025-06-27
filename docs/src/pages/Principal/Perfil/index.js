@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Share, Alert, Platform, BackHandler } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Menu, MenuItem } from 'react-native-material-menu';
+import { useRoute } from '@react-navigation/native';
+import { useEffect } from 'react';
+import { openDatabase } from '../../../database/setup';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const POST_SIZE = SCREEN_WIDTH - 40; 
@@ -11,6 +14,13 @@ const Perfil = () => {
 
   const hideMenu = () => setVisible(false);
   const showMenu = () => setVisible(true);
+
+  const route = useRoute();
+  const { usuario } = route.params;
+  console.log(usuario)
+  const [publicacao, setPublicacao] = useState(null);
+
+  
 
   const handleLogout = () => {
     hideMenu();
@@ -65,6 +75,36 @@ const Perfil = () => {
     }
   };
 
+useEffect(() => {
+  const carregarPublicacao = async () => {
+    const db = openDatabase();
+
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM publicacoes AS p JOIN usuarios AS u ON p.usuario_id = u.id WHERE p.usuario_id = ? LIMIT 1',
+        [usuario.id],
+        (_, { rows }) => {
+          if (rows.length > 0) {
+            const item = rows._array[0];
+            setPublicacao(item);
+            console.log('Publicação carregada:', item);
+          } else {
+            console.log('Nenhuma publicação encontrada.');
+          }
+        },
+        (_, error) => {
+          console.error('Erro ao carregar publicação:', error);
+          Alert.alert('Erro', 'Não foi possível carregar a publicação.');
+          return true;
+        }
+      );
+    });
+  };
+
+  carregarPublicacao();
+}, []);
+
+
   return (
       <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -87,8 +127,9 @@ const Perfil = () => {
           source={require('../../../assets/profile.png')}
           style={styles.profilePicture}
         />
-        <Text style={styles.name}>Claudia</Text>
-        <Text style={styles.location}>São Paulo, SP</Text>
+        <Text style={styles.name}>{publicacao?.nomeExibicao || 'Usuário'}</Text>
+        <Text style={styles.location}>{publicacao?.cidade || 'Cidade desconhecida'}</Text>
+
       </View>
 
       <View style={styles.stats}>

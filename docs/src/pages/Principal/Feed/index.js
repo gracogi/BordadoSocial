@@ -1,65 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, SafeAreaView, Share} from 'react-native';
+import { View, Text, Image, TouchableOpacity, SafeAreaView, Share, Alert, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styles from './styles';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { useRoute } from '@react-navigation/native';
-import { openDatabase } from '../../../database/setup';
 
 export default function Feed() {
   const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('text');
-  const [setImage] = useState(null);
-
   const route = useRoute();
   const { usuario } = route.params;
-  const [publicacao, setPublicacao] = useState(null);
- 
+
+  const [publicacoes, setPublicacoes] = useState([]);
+  const [activeTab, setActiveTab] = useState('text');
 
   useEffect(() => {
+    carregarPublicacoes();
 
-    const carregarPublicacao = async () => {
-      try {
-        const db = await openDatabase();
-        const publicacao = await db.getFirstAsync(
-          'SELECT * FROM publicacoes WHERE usuario_id = ?',
-          [usuario.id]
-        );
-        setPublicacao(publicacao);
-        console.log('Publicação carregada:', publicacao);
-      } catch (error) {
-        console.error('Erro ao carregar publicação:', error);
-        Alert.alert('Erro', 'Não foi possível carregar a publicação.');
-      }
-    };
-    
-    
     (async () => {
       const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-      
       if (cameraPermission.status !== 'granted') {
-        Alert.alert(
-          "Permissões necessárias",
-          "Precisamos de permissões para acessar sua câmera.",
-          [{ text: "OK" }]
-        );
+        Alert.alert("Permissões necessárias", "Precisamos de permissões para acessar sua câmera.", [{ text: "OK" }]);
       }
     })();
-    carregarPublicacao();
-    
   }, []);
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+  const carregarPublicacoes = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/publicacoes');
+      const data = await response.json();
+      setPublicacoes(data);
+    } catch (error) {
+      console.error('Erro ao carregar publicações:', error);
+      Alert.alert('Erro', 'Não foi possível carregar as publicações.');
     }
   };
 
@@ -71,10 +43,9 @@ export default function Feed() {
     });
 
     if (!result.canceled) {
-      // Navega para a tela de publicação com a imagem
       navigation.navigate('Add', { image: result.assets[0].uri });
     }
-};
+  };
 
   const handleTabPress = (tab) => {
     if (tab === 'photo') {
@@ -84,19 +55,13 @@ export default function Feed() {
     }
   };
 
-  //Compartilhamento
-  const handleShare = async () => {
+  const handleShare = async (item) => {
     try {
       const result = await Share.share({
-        message: 'Confira esta publicação incrível no Bordado Social!',
-        // Adicionar um URL aqui se tiver um link para a publicação
+        message: `Confira esta publicação incrível no Bordado Social!\n\n${item.descricao}`,
       });
       if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          console.log('Compartilhado com sucesso');
-        } else {
-          console.log('Compartilhado');
-        }
+        console.log('Compartilhado');
       } else if (result.action === Share.dismissedAction) {
         console.log('Compartilhamento cancelado');
       }
@@ -105,11 +70,57 @@ export default function Feed() {
     }
   };
 
+  const renderItem = ({ item }) => (
+    <View style={styles.post}>
+      <View style={styles.postHeader}>
+        <Image 
+          source={require('../../../assets/teste1.jpg')}
+          style={styles.postProfilePic}
+        />
+        <View>
+          <Text style={styles.postUsername}>{item.nomeExibicao}</Text>
+          <Text style={styles.postHandle}>@{item.arroba}</Text>
+        </View>
+        <TouchableOpacity style={styles.moreOptions}>
+          <Ionicons name="ellipsis-horizontal" size={20} color="gray" />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.postTitle}>Minha publicação</Text>
+      <Text>{item.descricao}</Text>
+
+      <Image 
+        source={require('../../../assets/teste2.jpg')}
+        style={styles.postImage}
+      />
+
+      <View style={styles.postActions}>
+        <View style={styles.actionGroup}>
+          <TouchableOpacity>
+            <Ionicons name="heart-outline" size={24} color="gray" />
+          </TouchableOpacity>
+          <Text style={styles.actionText}>{item.curtidas}</Text>
+        </View>
+
+        <View style={styles.actionGroup}>
+          <TouchableOpacity>
+            <Ionicons name="chatbubble-outline" size={24} color="gray" />
+          </TouchableOpacity>
+          <Text style={styles.actionText}>{item.comentarios}</Text>
+        </View>
+
+        <TouchableOpacity onPress={() => handleShare(item)}>
+          <Ionicons name="share-social-outline" size={24} color="gray" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>BORDADO SOCIAL</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
+        <TouchableOpacity onPress={() => navigation.navigate('Perfil', { usuario })}>
           <Image 
             source={require('../../../assets/profile.png')}
             style={styles.profilePic}
@@ -137,94 +148,12 @@ export default function Feed() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.post}>
-        <View style={styles.postHeader}>
-          <Image 
-            source={require('../../../assets/teste1.jpg')} 
-            style={styles.postProfilePic}
-          />
-          <View>
-            <Text style={styles.postUsername}>Maria Silva</Text>
-            <Text style={styles.postHandle}>@mariasilva</Text>
-          </View>
-          <TouchableOpacity style={styles.moreOptions}>
-            <Ionicons name="ellipsis-horizontal" size={20} color="gray" />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.postTitle}>Minha primeira publicação</Text>
-        <Text style={styles.postContent}>
-          Acabei de descobrir este aplicativo incrível! Estou muito animada para
-          compartilhar mais conteúdo com vocês.
-        </Text>
-        <Image 
-          source={require('../../../assets/teste2.jpg')} 
-          style={styles.postImage}
-        />
-        <View style={styles.postActions}>
-          <View style={styles.actionGroup}>
-            <TouchableOpacity>
-              <Ionicons name="heart-outline" size={24} color="gray" />
-            </TouchableOpacity>
-            <Text style={styles.actionText}>45</Text>
-          </View>
-          <View style={styles.actionGroup}>
-            <TouchableOpacity>
-              <Ionicons name="chatbubble-outline" size={24} color="gray" />
-            </TouchableOpacity>
-            <Text style={styles.actionText}>12</Text>
-          </View>
-          <TouchableOpacity onPress={handleShare}>
-            <Ionicons name="share-social-outline" size={24} color="gray" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.post}>
-        <View style={styles.postHeader}>
-          <Image 
-            source={require('../../../assets/teste1.jpg')} 
-            style={styles.postProfilePic}
-          />
-          <View>
-            <Text style={styles.postUsername}>Maria Silva</Text>
-            <Text style={styles.postHandle}>@mariasilva</Text>
-          </View>
-          <TouchableOpacity style={styles.moreOptions}>
-            <Ionicons name="ellipsis-horizontal" size={20} color="gray" />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.postTitle}>Minha primeira publicação</Text>
-        
-        {publicacao ? (
-          <Text>{publicacao.descricao}</Text>
-        ) : (
-          <Text>Carregando publicação...</Text>
-        )}
-
-        <Image 
-          source={require('../../../assets/teste2.jpg')} 
-          style={styles.postImage}
-        />
-        <View style={styles.postActions}>
-          <View style={styles.actionGroup}>
-            <TouchableOpacity>
-              <Ionicons name="heart-outline" size={24} color="gray" />
-            </TouchableOpacity>
-            <Text style={styles.actionText}>45</Text>
-          </View>
-          <View style={styles.actionGroup}>
-            <TouchableOpacity>
-              <Ionicons name="chatbubble-outline" size={24} color="gray" />
-            </TouchableOpacity>
-            <Text style={styles.actionText}>12</Text>
-          </View>
-          <TouchableOpacity onPress={handleShare}>
-            <Ionicons name="share-social-outline" size={24} color="gray" />
-          </TouchableOpacity>
-        </View>
-      </View>
-      
+      <FlatList
+        data={publicacoes}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
+        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Nenhuma publicação encontrada.</Text>}
+      />
     </SafeAreaView>
-
   );
 }
